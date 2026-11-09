@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="A free, original vector arcade game. Pilot your ship, clear the minefield, and survive the next wave. Play with keyboard or touch.">
+<title>Minefield — Vector Arcade</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='black' d='M0 0h40v40H0z'/%3E%3Cpath fill='none' stroke='%23edf8ff' stroke-width='2' d='M20 5L33 33 20 27 7 33Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="style.css">
+<script src="controls.js" defer></script>
+<script src="game.js" defer></script>
+</head>
+<body>
+<main class="cabinet">
+  <header class="masthead">
+    <a class="brand" href="./" aria-label="Minefield home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3 11 25-11-6-11 6Z"/></svg><span>MINEFIELD<span class="brand-sub">VECTOR ARCADE</span></span></a>
+    <div class="tools">
+      <button id="settings-btn" aria-label="Settings" aria-haspopup="dialog">⚙ <span>SETTINGS</span></button>
+      <button id="mute-btn" aria-label="Mute sound" aria-pressed="false">SOUND <span id="sound-label">ON</span></button>
+      <button id="pause-btn" disabled aria-label="Pause game">Ⅱ <span>PAUSE</span></button>
+      <button id="restart-btn" aria-label="Restart game">↻ <span>RESTART</span></button>
+    </div>
+  </header>
+  <section class="display" aria-label="Minefield arcade game">
+    <div class="hud">
+      <div><span class="stat-label">SCORE</span><strong id="score">000000</strong></div>
+      <div class="high-stat"><span class="stat-label">PERSONAL BEST</span><strong id="best">000000</strong></div>
+      <div class="wave-stat"><span class="stat-label">WAVE</span><strong id="wave">01</strong></div>
+      <div class="lives-stat"><span class="stat-label">SHIPS</span><strong id="lives" aria-label="3 ships remaining">△ △ △</strong></div>
+    </div>
+    <div class="arena" id="arena">
+      <canvas id="game" tabindex="0" aria-label="Vector spaceship and minefield. Keyboard controls can be changed in Settings. On touchscreens, use the joystick to rotate and thrust, and hold Fire to shoot."></canvas>
+      <div class="overlay" id="overlay">
+        <div class="menu" id="menu" role="dialog" aria-labelledby="menu-title">
+          <p class="edition" id="menu-kicker">A TRIBUTE TO THE VECTOR AGE</p>
+          <h1 id="menu-title">MINE<span>FIELD</span></h1>
+          <div class="title-rule"><span>ONE SHIP. AN ENDLESS MINEFIELD.</span></div>
+          <p class="menu-description" id="menu-description">Select your flight.</p>
+          <div class="mode-selection" id="mode-selection" role="group" aria-label="Game mode">
+            <button class="mode-card selected" data-mode="classic" aria-pressed="true">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m24 5 6 12 13 7-13 7-6 12-6-12L5 24l13-7Z"/><path d="m24 18 6 6-6 6-6-6Z"/></svg>
+              <strong>CLASSIC</strong><span class="mode-tagline">Endless arcade survival.</span><span class="mode-rules">3 ships · +1 every 4 waves</span><span class="mode-record" id="record-classic"></span>
+            </button>
+            <button class="mode-card" data-mode="challenge" aria-pressed="false">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 10h28v28H10Z"/><path d="m24 3 21 21-21 21L3 24Z"/><path d="M19 30V18m8 0h5l-5 6 5 6h-5"/></svg>
+              <strong>CHALLENGE</strong><span class="mode-tagline">Clear all 13 minefields.</span><span class="mode-rules">3 ships · evolving enemies</span><span class="mode-record" id="record-challenge"></span>
+            </button>
+            <button class="mode-card impossible-card" data-mode="impossible" aria-pressed="false">
+              <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m24 3 5 13 14-5-8 13 8 13-14-5-5 13-5-13-14 5 8-13-8-13 14 5Z"/><path d="M24 17v10m0 4v1"/></svg>
+              <strong>IMPOSSIBLE</strong><span class="mode-tagline">One life. Absolute chaos.</span><span class="mode-rules">1 ship · no extra lives</span><span class="mode-record" id="record-impossible"></span>
+            </button>
+          </div>
+          <button class="primary" id="start-btn">START GAME <span>↗</span></button>
+          <button id="main-menu-btn" class="text-button return-menu" hidden>RETURN TO MAIN MENU</button>
+          <p class="start-hint" id="start-hint">PRESS ENTER OR TAP TO BEGIN</p>
+          <div class="menu-facts" id="menu-facts"><span>3 SHIPS</span><span>∞ WAVES</span><span>PURE VECTOR</span></div>
+        </div>
+      </div>
+      <p id="shield-notice" class="shield-notice" aria-live="off"></p>
+      <p class="announcement" id="announcement" aria-live="polite"></p>
+    </div>
+    <div class="display-base"><span id="status">SYSTEM READY</span><span>EST. 1982 / REIMAGINED</span></div>
+  </section>
+  <footer class="console">
+    <div class="keyboard-guide" aria-label="Current keyboard controls">
+      <span>ROTATE <kbd data-hint="left"></kbd> / <kbd data-hint="right"></kbd></span>
+      <span>THRUST <kbd data-hint="thrust"></kbd></span>
+      <span>FIRE <kbd data-hint="fire"></kbd></span>
+      <span>PAUSE <kbd data-hint="pause"></kbd></span>
+    </div>
+    <div class="mobile-controls" id="mobile-controls" aria-label="Touch controls">
+      <div class="joystick-wrap">
+        <div class="joystick" id="joystick" role="group" aria-label="Joystick: drag left or right to rotate, upward to thrust">
+          <span class="stick-cross" aria-hidden="true"></span>
+          <span class="stick-knob" id="stick-knob" aria-hidden="true">△</span>
+        </div>
+        <span class="touch-caption">ROTATE + THRUST</span>
+      </div>
+      <p class="rotate-hint">↻ Rotate device<span>for a wider field</span></p>
+      <div class="fire-wrap">
+        <button class="fire-button" id="fire-btn" aria-label="Fire; hold for continuous shooting"><span aria-hidden="true">⊕</span>FIRE</button>
+        <span class="touch-caption">HOLD TO FIRE</span>
+      </div>
+    </div>
+  </footer>
+  <p class="credits">Original procedural artwork & sound. Inspired by the early vector arcade era. <span>Settings to customize · M to mute · F for fullscreen</span></p>
+</main>
+<dialog id="settings-dialog" aria-labelledby="settings-title" aria-describedby="settings-intro">
+  <div class="settings-header"><div><p class="edition">FLIGHT CONFIGURATION</p><h2 id="settings-title">Settings</h2></div><button id="settings-close" aria-label="Close settings">×</button></div>
+  <p class="settings-intro" id="settings-intro">Changes save automatically. Opening settings pauses your flight.</p>
+  <section class="key-settings" aria-labelledby="keyboard-title">
+    <h3 id="keyboard-title">Keyboard Controls</h3>
+    <p class="settings-help">Select a binding, then press a key. Escape cancels.</p>
+    <div class="binding-head" aria-hidden="true"><span>Action</span><span>Primary</span><span>Secondary</span></div>
+    <div id="binding-list"></div>
+    <p id="binding-message" role="status" aria-live="polite">Each key can be assigned to one binding.</p>
+    <button id="restore-bindings" class="text-button">Restore Default Keybinds</button>
+  </section>
+  <section class="preferences" aria-labelledby="preferences-title">
+    <h3 id="preferences-title">Preferences</h3>
+    <div class="preference-row"><span id="settings-sound-label">Sound</span><button id="settings-sound" aria-labelledby="settings-sound-label settings-sound" aria-pressed="true">On</button></div>
+    <div class="preference-row"><span id="glow-label">VECTOR GLOW</span><button id="glow-btn" aria-labelledby="glow-label glow-btn" aria-pressed="true">ON</button></div>
+    <div class="preference-row"><label for="mobile-visibility">Mobile Control Visibility</label><select id="mobile-visibility"><option value="auto">Auto</option><option value="show">Show</option><option value="hide">Hide</option></select></div>
+    <p class="settings-help">Auto shows touch controls on touch-capable devices.</p>
+  </section>
+  <div class="settings-footer"><span>Resume your flight when ready.</span><button id="settings-done">Done</button></div>
+</dialog>
+</body>
+</html>
