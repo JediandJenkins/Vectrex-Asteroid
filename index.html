@@ -9,6 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='black' d='M0 0h40v40H0z'/%3E%3Cpath fill='none' stroke='%23edf8ff' stroke-width='2' d='M20 5L33 33 20 27 7 33Z'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="style.css">
 <script src="controls.js" defer></script>
+<script src="interface.js" defer></script>
 <script src="game.js" defer></script>
 </head>
 <body>
@@ -20,8 +21,10 @@
       <button id="mute-btn" aria-label="Mute sound" aria-pressed="false">SOUND <span id="sound-label">ON</span></button>
       <button id="pause-btn" disabled aria-label="Pause game">Ⅱ <span>PAUSE</span></button>
       <button id="restart-btn" aria-label="Restart game">↻ <span>RESTART</span></button>
+      <button id="fullscreen-btn" aria-label="Enter fullscreen" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="fullscreen-icon" d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6"/></svg><span id="fullscreen-label">FULLSCREEN</span></button>
     </div>
   </header>
+  <p id="fullscreen-notice" class="screen-notice" role="status" aria-live="polite" hidden></p>
   <section class="display" aria-label="Minefield arcade game">
     <div class="hud">
       <div><span class="stat-label">SCORE</span><strong id="score">000000</strong></div>
@@ -52,6 +55,7 @@
             </button>
           </div>
           <button class="primary" id="start-btn">START GAME <span>↗</span></button>
+          <button id="help-btn" class="text-button help-trigger" aria-haspopup="dialog">HOW TO PLAY</button>
           <button id="main-menu-btn" class="text-button return-menu" hidden>RETURN TO MAIN MENU</button>
           <p class="start-hint" id="start-hint">PRESS ENTER OR TAP TO BEGIN</p>
           <div class="menu-facts" id="menu-facts"><span>3 SHIPS</span><span>∞ WAVES</span><span>PURE VECTOR</span></div>
@@ -91,7 +95,7 @@
   <p class="settings-intro" id="settings-intro">Changes save automatically. Opening settings pauses your flight.</p>
   <section class="key-settings" aria-labelledby="keyboard-title">
     <h3 id="keyboard-title">Keyboard Controls</h3>
-    <p class="settings-help">Select a binding, then press a key. Escape cancels.</p>
+    <p class="settings-help">Select a binding, then press a key. Escape cancels; it also exits fullscreen when active.</p>
     <div class="binding-head" aria-hidden="true"><span>Action</span><span>Primary</span><span>Secondary</span></div>
     <div id="binding-list"></div>
     <p id="binding-message" role="status" aria-live="polite">Each key can be assigned to one binding.</p>
@@ -100,11 +104,37 @@
   <section class="preferences" aria-labelledby="preferences-title">
     <h3 id="preferences-title">Preferences</h3>
     <div class="preference-row"><span id="settings-sound-label">Sound</span><button id="settings-sound" aria-labelledby="settings-sound-label settings-sound" aria-pressed="true">On</button></div>
-    <div class="preference-row"><span id="glow-label">VECTOR GLOW</span><button id="glow-btn" aria-labelledby="glow-label glow-btn" aria-pressed="true">ON</button></div>
+    <div class="preference-row glow-preference"><span id="glow-label">VECTOR GLOW</span><div class="glow-levels" role="group" aria-labelledby="glow-label"><button data-glow="off" aria-pressed="false">OFF</button><button data-glow="classic" aria-pressed="true">CLASSIC</button><button data-glow="intense" aria-pressed="false">INTENSE</button></div></div>
     <div class="preference-row"><label for="mobile-visibility">Mobile Control Visibility</label><select id="mobile-visibility"><option value="auto">Auto</option><option value="show">Show</option><option value="hide">Hide</option></select></div>
     <p class="settings-help">Auto shows touch controls on touch-capable devices.</p>
   </section>
   <div class="settings-footer"><span>Resume your flight when ready.</span><button id="settings-done">Done</button></div>
+</dialog>
+<dialog id="help-dialog" aria-labelledby="help-title">
+  <div class="settings-header"><div><p class="edition">PILOT BRIEFING</p><h2 id="help-title">How to Play</h2></div><button id="help-close" aria-label="Back to previous screen">×</button></div>
+  <section class="help-section" aria-labelledby="objective-title">
+    <h3 id="objective-title">Your objective</h3>
+    <p>Pilot your spaceship through dangerous minefields. Destroy every mine to advance to the next wave. Survive as long as possible and earn the highest score!</p>
+    <p>Larger mines split into smaller enemies when destroyed. Clear every fragment to finish the wave.</p>
+  </section>
+  <section class="help-section" aria-labelledby="computer-title">
+    <h3 id="computer-title">Computer controls</h3>
+    <dl class="help-keys"><div><dt>Rotate Left</dt><dd><kbd data-hint="left"></kbd></dd></div><div><dt>Rotate Right</dt><dd><kbd data-hint="right"></kbd></dd></div><div><dt>Thrust</dt><dd><kbd data-hint="thrust"></kbd></dd></div><div><dt>Fire</dt><dd><kbd data-hint="fire"></kbd></dd></div><div><dt>Pause / Resume</dt><dd><kbd data-hint="pause"></kbd></dd></div></dl>
+    <p>These are your current bindings. Customize either key for each action in Settings.</p>
+    <p class="settings-help">Use the fullscreen button or an unassigned F key to expand the view. Escape exits fullscreen first; otherwise your configured pause keys apply.</p>
+  </section>
+  <section class="help-section" aria-labelledby="mobile-title">
+    <h3 id="mobile-title">Mobile controls</h3>
+    <ul><li>Joystick Left — Rotate Left.</li><li>Joystick Right — Rotate Right.</li><li>Joystick Up — Thrust.</li><li>Joystick Diagonally Up — Rotate and Thrust.</li><li>FIRE Button — Shoot projectiles. Hold for continuous fire.</li></ul>
+    <p>Steer and fire with two fingers at the same time. A gentle sideways push rotates slowly; push farther to turn faster.</p>
+    <p>Your ship keeps its momentum after you release thrust. Landscape gives you a wider field.</p>
+  </section>
+  <section class="help-section" aria-labelledby="help-modes-title">
+    <h3 id="help-modes-title">Choose your mode</h3>
+    <dl class="help-modes"><dt>CLASSIC</dt><dd>Endless waves with increasing difficulty. Survive and achieve the highest score. Start with 3 ships; earn another every 4 completed waves.</dd><dt>CHALLENGE</dt><dd>Complete 13 minefields to win the game. Start with 3 ships and earn another every 4 completed waves.</dd><dt>IMPOSSIBLE</dt><dd>One life, extremely dangerous enemies, and rapidly increasing difficulty. Survive as long as possible. No extra lives.</dd></dl>
+  </section>
+  <section class="help-section" aria-labelledby="tips-title"><h3 id="tips-title">Flight tips</h3><ul><li>Keep moving to avoid enemy collisions.</li><li>Rotate while thrusting to change direction.</li><li>Large mines split into smaller ones.</li><li>Use momentum to your advantage.</li><li>Be careful when surrounded by enemies.</li></ul></section>
+  <div class="settings-footer"><span>Your flight waits for you.</span><button id="help-back">Back</button></div>
 </dialog>
 </body>
 </html>

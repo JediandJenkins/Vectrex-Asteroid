@@ -1,6 +1,6 @@
 /* Input sources are combined here. The simulation reads only the shared state. */
 'use strict';
-window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound }) => {
+window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound, toggleFullscreen, isFullscreenActive, isOverlayOpen, isViewTransition }) => {
   const $ = id => document.getElementById(id);
   const actions = {left: 'Rotate Left', right: 'Rotate Right', thrust: 'Thrust', fire: 'Fire', pause: 'Pause'};
   const defaults = {left: ['ArrowLeft', 'KeyA'], right: ['ArrowRight', 'KeyD'], thrust: ['ArrowUp', 'KeyW'], fire: ['Space', 'KeyJ'], pause: ['KeyP', 'Escape']};
@@ -97,6 +97,9 @@ window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound }) => {
   touchMedia.addEventListener('change', updateVisibility);
   // Capture runs before native button activation so Enter and Space can be rebound safely.
   window.addEventListener('keydown', event => {
+    if (event.code === 'Escape' && isFullscreenActive()) {
+      event.preventDefault(); if (capture) cancelCapture('Key capture canceled.'); if (!event.repeat) toggleFullscreen(); return;
+    }
     if (dialog.open) {
       if (!capture) return;
       event.preventDefault(); event.stopImmediatePropagation();
@@ -111,6 +114,7 @@ window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound }) => {
       const {action, slot} = capture; bindings[action][slot] = event.code; savePreferences(); cancelCapture(`${actions[action]} ${slot === 0 ? 'primary' : 'secondary'} set to ${keyName(event.code)}.`);
       return;
     }
+    if (isOverlayOpen()) return;
     if (event.ctrlKey || event.metaKey || event.altKey) return;
     const action = actionFor(event.code), playing = getMode() === 'playing';
     // A focused fire button retains its normal keyboard button behavior.
@@ -128,11 +132,7 @@ window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound }) => {
     if (event.repeat) return;
     // Unbound utility shortcuts remain available, but never override customized bindings.
     if (!action && event.code === 'KeyM') { event.preventDefault(); toggleSound(); }
-    if (!action && event.code === 'KeyF') {
-      event.preventDefault();
-      if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
-      else document.documentElement.requestFullscreen?.().catch(() => {});
-    }
+    if (!action && event.code === 'KeyF') { event.preventDefault(); toggleFullscreen(); }
     if (event.code === 'Enter' && getMode() !== 'playing' && !event.target.closest('button, a, select, input')) {
       event.preventDefault(); $('start-btn').click();
     }
@@ -151,25 +151,25 @@ window.createArcadeControls = ({ getMode, pause, audioInit, toggleSound }) => {
     stick.x = x; stick.y = y; sync();
   }
   joystick.addEventListener('pointerdown', event => {
-    event.preventDefault(); if (getMode() !== 'playing' || dialog.open || !touchVisible || joystickPointer !== null || event.button !== 0) return;
+    event.preventDefault(); if (getMode() !== 'playing' || dialog.open || isOverlayOpen() || !touchVisible || joystickPointer !== null || event.button !== 0) return;
     audioInit(); joystickPointer = event.pointerId; joystick.setPointerCapture(event.pointerId); moveStick(event);
   });
   joystick.addEventListener('pointermove', moveStick);
   function releaseStick(event) { if (event.pointerId !== joystickPointer) return; joystickPointer = null; stick.x = 0; stick.y = 0; sync(); }
   for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) joystick.addEventListener(name, releaseStick);
   fireButton.addEventListener('pointerdown', event => {
-    event.preventDefault(); if (getMode() !== 'playing' || dialog.open || !touchVisible || event.button !== 0) return;
+    event.preventDefault(); if (getMode() !== 'playing' || dialog.open || isOverlayOpen() || !touchVisible || event.button !== 0) return;
     audioInit(); firePointers.add(event.pointerId); fireButton.setPointerCapture(event.pointerId); sync();
   });
   function releaseFire(event) { firePointers.delete(event.pointerId); sync(); }
   for (const name of ['pointerup', 'pointercancel', 'lostpointercapture']) fireButton.addEventListener(name, releaseFire);
   fireButton.addEventListener('blur', () => { fireKeys.clear(); sync(); });
   for (const element of [joystick, fireButton]) element.addEventListener('contextmenu', event => event.preventDefault());
-  function backgroundReset() { reset(); if (capture) cancelCapture('Capture canceled because the window lost focus.'); if (getMode() === 'playing') pause(); }
+  function backgroundReset() { reset(); if (capture) cancelCapture('Capture canceled because the window lost focus.'); if (getMode() === 'playing' && (document.hidden || !isViewTransition())) pause(); }
   window.addEventListener('blur', backgroundReset);
   document.addEventListener('visibilitychange', () => { if (document.hidden) backgroundReset(); });
   // Old pointer coordinates are invalid after rotation, resize, or a visibility change.
   window.addEventListener('resize', reset);
   updateVisibility(); renderBindings();
-  return {state, reset, syncMode, renderBindings, get settingsOpen() { return dialog.open; }};
+  return {state, reset, resetForView: () => { reset(); if (capture) cancelCapture('Key capture canceled because the view changed.'); }, syncMode, renderBindings, get settingsOpen() { return dialog.open; }};
 };

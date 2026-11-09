@@ -18,13 +18,15 @@
     challenge: {name: 'CHALLENGE', lives: 3, extraEvery: 4, waves: 13, count: 4, countStep: .65, countCap: 12, speed: 32, speedStep: 4, speedWaves: Infinity, fragmentSpeed: 26, fragments: 2, maxMines: 72},
     impossible: {name: 'IMPOSSIBLE', lives: 1, extraEvery: 0, waves: null, count: 10, countStep: 1.25, countCap: 18, speed: 88, speedStep: 16, speedWaves: Infinity, fragmentSpeed: 34, fragments: 3, maxMines: 72}
   };
-  let gameType = 'classic', completedWaves = 0, glow = true, victoryTime = 0, framePaths = null, vectorAlpha = 1, vectorMatrix = null;
+  let gameType = 'classic', completedWaves = 0, glow = true, glowLevel = 'classic', victoryTime = 0, framePaths = null, vectorAlpha = 1, vectorMatrix = null;
   let pixelRatio = 1, mobileGlow = false, shieldLabel = '';
   const records = {classic: {score: 0, wave: 0}, challenge: {score: 0, bestTime: null, completed: false}, impossible: {score: 0, wave: 0, survival: 0}};
   const config = () => MODES[gameType];
   let accumulator = 0, previous = 0, muted = false, audio, master, thrustGain, thrustOsc;
-  const controls = createArcadeControls({getMode: () => mode, pause, audioInit, toggleSound});
+  let display;
+  const controls = createArcadeControls({getMode: () => mode, pause, audioInit, toggleSound, toggleFullscreen: () => display?.toggleFullscreen(), isFullscreenActive: () => display?.fullscreenActive || false, isOverlayOpen: () => $('help-dialog').open, isViewTransition: () => display?.transitioning || false});
   const input = controls.state;
+  display = createArcadeInterface({getMode: () => mode, pause, resetInput: () => controls.resetForView(), refreshBindings: () => controls.renderBindings(), resize});
   const rand = (a, b) => a + Math.random() * (b - a);
   const wrap = (v, n) => ((v % n) + n) % n;
   const delta = (a, b, n) => wrap(a - b + n / 2, n) - n / 2;
@@ -42,9 +44,9 @@
       if ('completed' in record) { record.completed = source.completed === true; record.bestTime = source.bestTime > 0 && Number.isFinite(source.bestTime) ? source.bestTime : null; }
     }
   } catch (_) {}
-  try { records.classic.score = Math.max(records.classic.score, nonnegative(Number(localStorage.getItem('minefield.best')))); muted = localStorage.getItem('minefield.muted') === 'true'; glow = localStorage.getItem('minefield.glow') !== 'false'; } catch (_) {}
+  try { records.classic.score = Math.max(records.classic.score, nonnegative(Number(localStorage.getItem('minefield.best')))); muted = localStorage.getItem('minefield.muted') === 'true'; const savedGlow = localStorage.getItem('minefield.glowLevel'); glowLevel = ['off', 'classic', 'intense'].includes(savedGlow) ? savedGlow : localStorage.getItem('minefield.glow') === 'false' ? 'off' : 'classic'; glow = glowLevel !== 'off'; if (savedGlow !== glowLevel) localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {}
   best = records.classic.score;
-  function save() { try { localStorage.setItem('minefield.records', JSON.stringify(records)); localStorage.setItem('minefield.best', String(records.classic.score)); localStorage.setItem('minefield.muted', String(muted)); localStorage.setItem('minefield.glow', String(glow)); } catch (_) {} }
+  function save() { try { localStorage.setItem('minefield.records', JSON.stringify(records)); localStorage.setItem('minefield.best', String(records.classic.score)); localStorage.setItem('minefield.muted', String(muted)); localStorage.setItem('minefield.glow', String(glow)); localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {} }
   function updateRecords(completed = false) {
     const record = records[gameType]; record.score = Math.max(record.score, score);
     if (gameType === 'classic') record.wave = Math.max(record.wave, wave);
@@ -57,7 +59,14 @@
     $('record-challenge').textContent = `BEST ${pad(records.challenge.score)} · ${records.challenge.completed ? 'CLEARED · BEST TIME ' + formatTime(records.challenge.bestTime || 0) : 'NOT YET CLEARED'}`;
     $('record-impossible').textContent = `BEST ${pad(records.impossible.score)} · CLEARED ${records.impossible.wave} · LONGEST ${formatTime(records.impossible.survival)}`;
   }
-  function glowUI() { document.body.classList.toggle('glow-off', !glow); $('glow-btn').textContent = glow ? 'ON' : 'OFF'; $('glow-btn').setAttribute('aria-pressed', String(glow)); }
+  const GLOW_PROFILES = {
+    classic: {bloom: .28, radius: .72, hot: 1, blueWidth: 6, blueAlpha: .15, cyanWidth: 2.3, cyanAlpha: .36, rim: 1.25, rimAlpha: .5, blur: 3},
+    intense: {bloom: 1, radius: 1, hot: 1.2, blueWidth: 10, blueAlpha: .27, cyanWidth: 3.2, cyanAlpha: .68, rim: 1.55, rimAlpha: .85, blur: 5}
+  };
+  function glowUI() {
+    glow = glowLevel !== 'off'; document.body.classList.toggle('glow-off', !glow); document.body.classList.toggle('glow-intense', glowLevel === 'intense');
+    for (const button of document.querySelectorAll('[data-glow]')) button.setAttribute('aria-pressed', String(button.dataset.glow === glowLevel));
+  }
   function audioInit() {
     try {
       if (!audio) {
@@ -153,7 +162,7 @@
     $('overlay').hidden = false; $('overlay').className = 'overlay home-overlay'; $('menu').className = 'menu home';
     $('menu-kicker').textContent = 'A TRIBUTE TO THE VECTOR AGE'; $('menu-title').innerHTML = 'MINE<span>FIELD</span>';
     $('menu-description').textContent = 'SELECT YOUR FLIGHT'; $('mode-selection').hidden = false; $('menu-facts').hidden = true;
-    $('start-btn').innerHTML = 'START GAME <span>↗</span>'; $('main-menu-btn').hidden = true; $('start-hint').textContent = 'PRESS ENTER OR TAP TO BEGIN';
+    $('start-btn').innerHTML = 'START GAME <span>↗</span>'; $('main-menu-btn').hidden = true; $('help-btn').hidden = false; $('start-hint').textContent = 'PRESS ENTER OR TAP TO BEGIN';
     $('pause-btn').disabled = true; $('status').textContent = `${config().name} / SYSTEM READY`; $('announcement').textContent = ''; $('shield-notice').textContent = '';
     best = records[gameType].score; renderRecords(); hud(); $('overlay').scrollTop = 0;
   }
@@ -166,7 +175,7 @@
     $('menu-title').textContent = paused ? 'PAUSED' : won ? 'MINEFIELD CLEARED' : 'GAME OVER';
     $('menu-description').innerHTML = paused ? 'Take a breath. The field can wait.' : `FINAL SCORE ${pad(score)}<br>${won ? `SHIPS REMAINING ${lives}<br>COMPLETION TIME ${formatTime(elapsed)}` : `WAVE ${String(wave).padStart(2, '0')} · BEST ${pad(best)}<br>TIME ${formatTime(elapsed)}`}`;
     $('start-btn').innerHTML = paused ? 'RESUME <span>↗</span>' : won ? 'REPLAY CHALLENGE <span>↗</span>' : 'PLAY AGAIN <span>↗</span>';
-    $('main-menu-btn').hidden = false; $('start-hint').textContent = paused ? 'TAP TO RESUME' : 'PRESS ENTER OR TAP TO REPLAY';
+    $('main-menu-btn').hidden = false; $('help-btn').hidden = !paused; $('start-hint').textContent = paused ? 'TAP TO RESUME' : 'PRESS ENTER OR TAP TO REPLAY';
     $('status').textContent = paused ? `${config().name} / FLIGHT PAUSED` : won ? 'CAMPAIGN COMPLETE' : `${config().name} / RUN ENDED`;
     $('announcement').textContent = ''; $('shield-notice').textContent = ''; controls.renderBindings();
     $('overlay').scrollTop = 0; if (!paused) $('start-btn').focus({preventScroll: true});
@@ -273,8 +282,9 @@
     for (const x of xs) for (const y of ys) { vectorMatrix = {a: scale, b: 0, c: 0, d: scale, e: x * scale, f: y * scale}; draw(); }
     vectorMatrix = previousMatrix;
   }
-  function collectBloom(e, radius, intensity) {
+  function collectBloom(e, radius, intensity, hot = false) {
     if (!glow) return;
+    const profile = GLOW_PROFILES[glowLevel]; radius *= profile.radius; intensity = Math.min(1, intensity * profile.bloom * (hot ? profile.hot : 1));
     copies(e, radius * pixelRatio / scale, () => bloomSources.push({x: vectorMatrix.e / pixelRatio, y: vectorMatrix.f / pixelRatio, radius, intensity}));
   }
   function drawMine(m, opacity = 1) {
@@ -312,10 +322,10 @@
       for (const m of attractMines) { const e = {...m, x: m.x / 900 * W, y: m.y / 620 * H}; drawMine(e, .45); }
     } else {
       for (const m of mines) drawMine(m);
-      for (const b of bullets) { collectBloom(b, 22, .65); copies(b, 8, () => { const n = Math.hypot(b.vx, b.vy); path([[0, 0], [-b.vx / n * 6, -b.vy / n * 6]]); }); }
+      for (const b of bullets) { collectBloom(b, 22, .65, true); copies(b, 8, () => { const n = Math.hypot(b.vx, b.vy); path([[0, 0], [-b.vx / n * 6, -b.vy / n * 6]]); }); }
       // Sample only the broad particle light spill at high counts; every particle still has its vector and line halo.
       const lightStride = Math.max(1, Math.ceil(particles.length / 40));
-      particles.forEach((p, i) => { const fade = Math.max(0, p.life / p.max); if (i % lightStride === 0) collectBloom(p, 28, Math.min(1, .35 * fade * lightStride)); vectorAlpha = fade; copies(p, 12, () => path([[0, 0], [Math.cos(p.angle) * p.length, Math.sin(p.angle) * p.length]])); });
+      particles.forEach((p, i) => { const fade = Math.max(0, p.life / p.max); if (i % lightStride === 0) collectBloom(p, 28, Math.min(1, .35 * fade * lightStride), true); vectorAlpha = fade; copies(p, 12, () => path([[0, 0], [Math.cos(p.angle) * p.length, Math.sin(p.angle) * p.length]])); });
       vectorAlpha = 1; drawShip();
       if (mode === 'victory') drawVictory();
     }
@@ -338,6 +348,7 @@
       for (let i = 0; i < 4; i++) { target.globalAlpha = alpha * (i + 1) / 4; target.stroke(framePaths[i]); }
     };
     if (glow) {
+      const profile = GLOW_PROFILES[glowLevel];
       // Only emitted light is composited at quarter CSS resolution. Geometry remains sharp at full canvas DPR.
       // Cached radial spill plus additive stroke bands make overlapping explosions bloom like phosphor.
       haloCtx.setTransform(1, 0, 0, 1, 0, 0); haloCtx.clearRect(0, 0, haloCanvas.width, haloCanvas.height);
@@ -348,10 +359,10 @@
         haloCtx.drawImage(bloomSprite, light.x - light.radius, light.y - light.radius, light.radius * 2, light.radius * 2);
       }
       haloCtx.setTransform(HALO_SCALE / pixelRatio, 0, 0, HALO_SCALE / pixelRatio, 0, 0); haloCtx.lineCap = 'round'; haloCtx.lineJoin = 'round';
-      stroke(haloCtx, '#087bff', pixelRatio * 10, 0, .27);
-      stroke(haloCtx, '#22edff', pixelRatio * 3.2, 0, .68);
+      stroke(haloCtx, '#087bff', pixelRatio * profile.blueWidth, HALO_SCALE * profile.blur, profile.blueAlpha);
+      stroke(haloCtx, '#22edff', pixelRatio * profile.cyanWidth, HALO_SCALE, profile.cyanAlpha);
       ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.drawImage(haloCanvas, 0, 0, canvas.width, canvas.height);
-      stroke(ctx, '#4cf5ff', Math.max(pixelRatio * 1.55, scale * 1.65), 0, .85);
+      stroke(ctx, '#4cf5ff', Math.max(pixelRatio * profile.rim, scale * profile.rim), 0, profile.rimAlpha);
     }
     stroke(ctx, '#edfaff', Math.max(pixelRatio * .95, scale * 1.25), 0, 1);
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
@@ -377,14 +388,14 @@
   $('pause-btn').addEventListener('click', () => { audioInit(); pause(); });
   $('mute-btn').addEventListener('click', toggleSound);
   $('main-menu-btn').addEventListener('click', mainMenu);
-  $('glow-btn').addEventListener('click', () => { glow = !glow; glowUI(); save(); render(); });
+  for (const button of document.querySelectorAll('[data-glow]')) button.addEventListener('click', () => { glowLevel = button.dataset.glow; glowUI(); save(); render(); });
   for (const button of document.querySelectorAll('[data-mode]')) button.addEventListener('click', () => {
     if (mode !== 'start') return; gameType = button.dataset.mode;
     for (const card of document.querySelectorAll('[data-mode]')) { const selected = card === button; card.classList.toggle('selected', selected); card.setAttribute('aria-pressed', String(selected)); }
     best = records[gameType].score; lives = config().lives; $('status').textContent = `${config().name} / SYSTEM READY`; hud();
   });
   new ResizeObserver(resize).observe(arena);
-  window.render_game_to_text = () => JSON.stringify({mode, gameType, completedWaves, elapsed, glow, records, difficulty: difficulty(), maxMines: config().maxMines, coordinates: 'origin top-left; x right; y down; angles radians, 0 right; toroidal wrapping', width: W, height: H, score, best, wave, lives, ship, mines: mines.map(({shape, vertices, ...m}) => m), bullets, particles: particles.length, waveDelay, respawn, inputs: ['left', 'right', 'thrust', 'fire'].filter(active), input: {...input}, settingsOpen: controls.settingsOpen, muted});
+  window.render_game_to_text = () => JSON.stringify({mode, gameType, completedWaves, elapsed, glow, glowLevel, fullscreen: display.fullscreenState, helpOpen: $('help-dialog').open, records, difficulty: difficulty(), maxMines: config().maxMines, coordinates: 'origin top-left; x right; y down; angles radians, 0 right; toroidal wrapping', width: W, height: H, score, best, wave, lives, ship, mines: mines.map(({shape, vertices, ...m}) => m), bullets, particles: particles.length, waveDelay, respawn, inputs: ['left', 'right', 'thrust', 'fire'].filter(active), input: {...input}, settingsOpen: controls.settingsOpen, muted});
   window.advanceTime = ms => { const n = Math.max(1, Math.round(ms / (STEP * 1000))); for (let i = 0; i < n; i++) update(STEP); render(); };
   mainMenu(); glowUI(); hud(); muteUI(); resize(); requestAnimationFrame(frame);
 })();
