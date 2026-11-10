@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="style.css">
 <script src="controls.js" defer></script>
 <script src="interface.js" defer></script>
+<script src="challenge.js" defer></script>
 <script src="game.js" defer></script>
 </head>
 <body>
@@ -47,7 +48,7 @@
             </button>
             <button class="mode-card" data-mode="challenge" aria-pressed="false">
               <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M10 10h28v28H10Z"/><path d="m24 3 21 21-21 21L3 24Z"/><path d="M19 30V18m8 0h5l-5 6 5 6h-5"/></svg>
-              <strong>CHALLENGE</strong><span class="mode-tagline">Clear all 13 minefields.</span><span class="mode-rules">3 ships · evolving enemies</span><span class="mode-record" id="record-challenge"></span>
+              <strong>CHALLENGE</strong><span class="mode-tagline">Clear all 13 minefields.</span><span class="mode-rules">Hard campaign · bonus ships on 4 &amp; 8</span><span class="mode-record" id="record-challenge"></span>
             </button>
             <button class="mode-card impossible-card" data-mode="impossible" aria-pressed="false">
               <svg viewBox="0 0 48 48" aria-hidden="true"><path d="m24 3 5 13 14-5-8 13 8 13-14-5-5 13-5-13-14 5 8-13-8-13 14 5Z"/><path d="M24 17v10m0 4v1"/></svg>
@@ -131,7 +132,7 @@
   </section>
   <section class="help-section" aria-labelledby="help-modes-title">
     <h3 id="help-modes-title">Choose your mode</h3>
-    <dl class="help-modes"><dt>CLASSIC</dt><dd>Endless waves with increasing difficulty. Survive and achieve the highest score. Start with 3 ships; earn another every 4 completed waves.</dd><dt>CHALLENGE</dt><dd>Complete 13 minefields to win the game. Start with 3 ships and earn another every 4 completed waves.</dd><dt>IMPOSSIBLE</dt><dd>One life, extremely dangerous enemies, and rapidly increasing difficulty. Survive as long as possible. No extra lives.</dd></dl>
+    <dl class="help-modes"><dt>CLASSIC</dt><dd>Endless waves with increasing difficulty. Survive and achieve the highest score. Start with 3 ships; earn another every 4 completed waves.</dd><dt>CHALLENGE</dt><dd>Complete 13 hard minefields to win the game. Start with 3 ships; earn bonus ships after waves 4 and 8. Large mines split into 3 medium mines from wave 9; each medium splits into 2 small mines.</dd><dt>IMPOSSIBLE</dt><dd>One life, extremely dangerous enemies, and rapidly increasing difficulty. Survive as long as possible. No extra lives.</dd></dl>
   </section>
   <section class="help-section" aria-labelledby="tips-title"><h3 id="tips-title">Flight tips</h3><ul><li>Keep moving to avoid enemy collisions.</li><li>Rotate while thrusting to change direction.</li><li>Large mines split into smaller ones.</li><li>Use momentum to your advantage.</li><li>Be careful when surrounded by enemies.</li></ul></section>
   <div class="settings-footer"><span>Your flight waits for you.</span><button id="help-back">Back</button></div>

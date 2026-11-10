@@ -2,7 +2,7 @@
 
 An original vector arcade game inspired by the early 1980s. No copied artwork, libraries, network requests, build step, or server required.
 
-Open `index.html` in a modern browser to play. For Cloudflare Pages, upload `index.html`, `style.css`, `controls.js`, `interface.js`, and `game.js` using a Direct Upload project, or upload the included `minefield-cloudflare.zip`. For Git integration, choose no framework, leave the build command empty, and use `.` as the output directory.
+Open `index.html` in a modern browser to play. For Cloudflare Pages, upload `index.html`, `style.css`, `controls.js`, `interface.js`, `challenge.js`, and `game.js` using a Direct Upload project, or upload the included `minefield-cloudflare.zip`. For Git integration, choose no framework, leave the build command empty, and use `.` as the output directory.
 
 ## Controls
 
@@ -25,12 +25,12 @@ Settings also includes sound and **Mobile Control Visibility: Auto / Show / Hide
 Select a mode on the main menu, then Start Game. Restart and Play Again repeat the selected mode. Results and the pause screen include Return to Main Menu. On very small screens, the mode menu scrolls; gameplay stays fixed in place.
 
 - **Classic:** endless waves, three starting ships, two fragments per split, steady difficulty progression. Earn a ship after every four completed waves. Records: highest score and highest wave reached.
-- **Challenge:** a 13-wave campaign, three starting ships, and a bonus ship after waves 4, 8, and 12. Curved-course mines appear from wave 4; surging mines appear from wave 8. Clear wave 13 for the animated MINEFIELD CLEARED screen with final score, remaining ships, and completion time. Records: highest score, campaign completion, fastest clear time.
+- **Challenge:** the Hard 13-wave campaign, three starting ships, and bonus ships only after waves 4 and 8. Curved-course mines appear from wave 4, surging mines from wave 7, and weaving mines from wave 10. Waves 1–8 split large mines into 2 medium mines; waves 9–13 produce 3 medium mines. Each medium always produces 2 small mines. Clear wave 13 for the animated MINEFIELD CLEARED screen with final score, remaining ships, and completion time. Records: highest score, campaign completion, fastest clear time.
 - **Impossible:** one ship, no bonuses, ten fast mines in the opening wave, three fragments per split, and smooth weaving/surging trajectories. Speed and steering difficulty keep increasing with each wave; the enemy-count budget does not impose a difficulty ceiling. Records: highest score, highest wave fully cleared, and longest survival.
 
 All modes preserve the ship's acceleration, momentum, maximum speed, firing cadence and scoring: large / medium / small mines award 20 / 50 / 100 points. Destroy every mine to advance. A three-second spawn shield has a visible countdown; new waves also provide brief protection and keep new enemies away from the ship. Timers measure active game time, excluding pauses, settings, and result screens.
 
-Each mode has independent local records. Existing `minefield.best` scores migrate to Classic without deleting keyboard or sound preferences. Storage is optional: play and settings remain usable if it is blocked. Sound starts after interaction.
+Each mode has independent local records. Hard Challenge records use `minefield.challenge.hard-v1`; original campaign records remain preserved at `minefield.records.challenge` and are not used as Hard scores or completion times. Classic and Impossible records keep their existing keys and values. Existing `minefield.best` scores migrate to Classic without deleting keyboard or sound preferences. Storage is optional: play and settings remain usable if it is blocked. Sound starts after interaction.
 
 ## Vector glow
 
@@ -60,9 +60,33 @@ Back, the close button, or Escape outside fullscreen returns to the previous scr
 
 Canvas uses device pixel ratio scaling (capped at 2 on touch/small or low-core layouts and 3 otherwise for performance). Physics runs at 120 fixed steps per second, with requestAnimationFrame rendering. The small `interface.js` module owns fullscreen/help, while `controls.js` combines keyboard and pointer sources into one shared state; gameplay reads no device-specific events. Collision checks use toroidal distances and swept projectile segments. Resize and orientation changes preserve object positions relative to the field.
 
-Difficulty lives in the `MODES` configuration at the top of `game.js`; one shared engine handles all modes. At most 72 mines and 300 particles (180 on mobile/low-power layouts) are active. Fragment production respects this budget. Glow batches cached vector geometry into four `Path2D` opacity groups, avoiding per-object shadow passes and full-screen blur filters. A cached radial light sprite and additive blue/cyan halo strokes are composited in a quarter-CSS-resolution light buffer beneath sharp cores on both desktop and mobile. Only emitted light is softened; the game itself is never blurred. Broad particle light spill is sampled above 40 particles while every particle retains its vector and line halo, keeping dense scenes bounded. Victory animation respects reduced-motion preferences.
+Classic and Impossible difficulty lives in the `MODES` configuration at the top of `game.js`; the approved Hard Challenge schedule and pure quota/split rules live in `challenge.js`. One shared engine handles all modes. At most 72 mines and 300 particles (180 on mobile/low-power layouts) are active. Fragment production respects this budget. Glow batches cached vector geometry into four `Path2D` opacity groups, avoiding per-object shadow passes and full-screen blur filters. A cached radial light sprite and additive blue/cyan halo strokes are composited in a quarter-CSS-resolution light buffer beneath sharp cores on both desktop and mobile. Only emitted light is softened; the game itself is never blurred. Broad particle light spill is sampled above 40 particles while every particle retains its vector and line halo, keeping dense scenes bounded. Victory animation respects reduced-motion preferences.
 
 For verification, `window.render_game_to_text()` exposes current state and `window.advanceTime(ms)` advances the simulation. These require no dependency and do not modify normal play.
+
+## Challenge Hard balance and focused tests
+
+| Wave | Initial large mines | Nominal large speed | Turn coefficient | Drift / Curve / Surge / Weave | Maximum small mines |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 4 | 36 | 0.38 | 4 / 0 / 0 / 0 | 16 |
+| 2 | 4 | 42 | 0.38 | 4 / 0 / 0 / 0 | 16 |
+| 3 | 5 | 50 | 0.38 | 5 / 0 / 0 / 0 | 20 |
+| 4 | 6 | 60 | 0.45 | 2 / 4 / 0 / 0 | 24 |
+| 5 | 6 | 72 | 0.45 | 2 / 4 / 0 / 0 | 24 |
+| 6 | 7 | 86 | 0.45 | 3 / 4 / 0 / 0 | 28 |
+| 7 | 8 | 102 | 0.55 | 2 / 2 / 4 / 0 | 32 |
+| 8 | 8 | 120 | 0.55 | 2 / 2 / 4 / 0 | 32 |
+| 9 | 9 | 138 | 0.55 | 2 / 3 / 4 / 0 | 54 |
+| 10 | 10 | 154 | 0.65 | 1 / 2 / 5 / 2 | 60 |
+| 11 | 10 | 168 | 0.70 | 1 / 2 / 5 / 2 | 60 |
+| 12 | 11 | 180 | 0.75 | 1 / 2 / 6 / 2 | 66 |
+| 13 | 12 | 190 | 0.80 | 1 / 2 / 6 / 3 | 72 |
+
+Speed remains `(nominal speed + 26 × size stages below large) × random(0.85, 1.2)` in world units per second. Existing surge/weave speed oscillation and movement formulas are unchanged. Turn coefficients are radians per second before the existing behavior-specific phase factor. Quotas use largest remainders with tie priority Weave, Surge, Curve, Drift; assignment order, headings, speed multipliers, and phases remain randomized. Children inherit their parent's behavior.
+
+Every Challenge wave's complete descendant tree fits the existing 72-active-mine cap without fragment suppression. Wave 13 has 12 large, 36 medium, and 72 small mines across its full tree. A full campaign requires 856 destructions and awards 65,000 points. The existing 2.3-second intermission before wave 13 displays FINAL MINEFIELD with a distinct synthesized warning. No movement, firing, collision, or shield parameters change.
+
+Run the dependency-free focused tests with `node --test tests/challenge-hard.test.cjs` (Node 18+). They check all 13 profiles, deterministic quotas, shuffled assignment, splits, worst-case live budgets, bonus-life rules, and record version identity. Browser integration was additionally verified in Chromium and WebKit through the real spawning, splitting, collision, wave-clear, and victory paths; QA tooling is kept outside the static deployment.
 
 ## Verification and browser limits
 
