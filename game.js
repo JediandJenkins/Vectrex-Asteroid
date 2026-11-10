@@ -79,14 +79,16 @@
   }
   function audioInit() {
     try {
-      if (!audio) {
+      if (!audio || audio.state === 'closed') {
         const Audio = window.AudioContext || window.webkitAudioContext;
         if (!Audio) return;
         audio = new Audio(); master = audio.createGain(); master.gain.value = muted ? 0 : .28; master.connect(audio.destination);
         thrustOsc = audio.createOscillator(); thrustOsc.type = 'sawtooth'; thrustOsc.frequency.value = 47;
         thrustGain = audio.createGain(); thrustGain.gain.value = 0; thrustOsc.connect(thrustGain); thrustGain.connect(master); thrustOsc.start();
       }
-      if (audio.state === 'suspended') audio.resume().catch(() => {});
+      // Safari can interrupt audio after a tab switch, screen lock, or another audio session.
+      // Retry from the next user interaction; a rejected resume must remain retryable.
+      if (audio.state === 'suspended' || audio.state === 'interrupted') audio.resume().catch(() => {});
     } catch (_) { /* Sound is optional if a browser denies audio access. */ }
   }
   function tone(start, end, duration, volume = .2, type = 'square') {
