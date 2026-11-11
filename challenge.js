@@ -1,19 +1,33 @@
-/* Approved Challenge Hard balance. Pure rules are also testable with Node, without browser dependencies. */
+/* Challenge campaign balance. Pure rules also run in dependency-free Node tests. */
 (function (root, factory) {
   const rules = factory();
   if (typeof module === 'object' && module.exports) module.exports = rules;
   else root.MinefieldChallenge = rules;
 })(typeof globalThis !== 'undefined' ? globalThis : this, () => {
   'use strict';
-  const version = 'hard-v1', maxMines = 72;
+  const version = 'balanced-v2', maxMines = 72;
   const types = ['drift', 'curve', 'surge', 'weave'];
-  const schedule = [[4, 36], [4, 42], [5, 50], [6, 60], [6, 72], [7, 86], [8, 102], [8, 120], [9, 138], [10, 154], [10, 168], [11, 180], [12, 190]];
-  const profiles = schedule.map(([count, speed], i) => {
-    const w = i + 1;
-    const weights = w <= 3 ? [100, 0, 0, 0] : w <= 6 ? [40, 60, 0, 0] : w <= 9 ? [20, 30, 50, 0] : [10, 20, 50, 20];
-    const profile = {count, speed, turn: w <= 3 ? .38 : w <= 6 ? .45 : w <= 9 ? .55 : [.65, .70, .75, .80][w - 10], largeFragments: w >= 9 ? 3 : 2, mediumFragments: 2, weights: Object.freeze(weights)};
-    // Every original large mine has a bounded leaf count. This proves the live cap cannot clip
-    // Challenge descendants, even when all larger mines are split before any small ones are shot.
+  // Large count, nominal speed, turn coefficient, then exact Drift / Curve / Surge / Weave quotas.
+  // Keep splitting consistent from the first wave; fewer opening families offset the third medium.
+  const schedule = [
+    [3, 30, .28, 3, 0, 0, 0],
+    [3, 32, .28, 3, 0, 0, 0],
+    [4, 34, .28, 4, 0, 0, 0],
+    [4, 37, .30, 3, 1, 0, 0],
+    [4, 40, .32, 2, 2, 0, 0],
+    [5, 44, .34, 3, 2, 0, 0],
+    [5, 48, .36, 2, 2, 1, 0],
+    [6, 52, .38, 3, 2, 1, 0],
+    [6, 56, .40, 2, 2, 2, 0],
+    [6, 60, .42, 2, 2, 1, 1],
+    [7, 64, .44, 3, 2, 1, 1],
+    [7, 68, .47, 2, 2, 2, 1],
+    [8, 72, .50, 3, 2, 2, 1]
+  ];
+  const profiles = schedule.map(([count, speed, turn, ...counts]) => {
+    if (counts.reduce((sum, n) => sum + n, 0) !== count) throw new Error('Challenge behavior quotas must match its mine count');
+    const profile = {count, speed, turn, largeFragments: 3, mediumFragments: 2, behaviors: Object.freeze(Object.fromEntries(types.map((type, i) => [type, counts[i]])))};
+    // Every descendant has a bounded leaf budget; no destruction order can exceed this limit.
     if (count * profile.largeFragments * profile.mediumFragments > maxMines) throw new Error('Challenge fragment budget exceeds the active-mine cap');
     return Object.freeze(profile);
   });
@@ -21,17 +35,10 @@
     if (!Number.isInteger(number) || number < 1 || number > profiles.length) throw new RangeError('Challenge wave must be 1–13');
     return profiles[number - 1];
   }
-  function quotas(number) {
-    const p = wave(number);
-    // Integer remainder arithmetic preserves exact ties. Higher type index wins: Weave > Surge > Curve > Drift.
-    const shares = p.weights.map((weight, index) => ({index, count: Math.floor(p.count * weight / 100), remainder: p.count * weight % 100}));
-    const remaining = p.count - shares.reduce((sum, share) => sum + share.count, 0);
-    [...shares].sort((a, b) => b.remainder - a.remainder || b.index - a.index).slice(0, remaining).forEach(share => shares[share.index].count++);
-    return Object.fromEntries(shares.map(share => [types[share.index], share.count]));
-  }
+  function quotas(number) { return {...wave(number).behaviors}; }
   function initialBehaviors(number, random = Math.random) {
     const counts = quotas(number), result = types.flatMap(type => Array(counts[type]).fill(type));
-    // Counts are deterministic; spatial assignment remains randomized along with headings, speeds and phases.
+    // Counts are deterministic; assignment, headings, speed multipliers, and phases stay randomized.
     for (let i = result.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [result[i], result[j]] = [result[j], result[i]]; }
     return result;
   }

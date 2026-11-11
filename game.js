@@ -47,11 +47,11 @@
     }
   } catch (_) {}
   try {
-    const savedHard = JSON.parse(localStorage.getItem(challengeRules.recordKey));
-    if (savedHard?.version === challengeRules.version) {
-      records.challenge.score = Math.floor(nonnegative(savedHard.score));
-      records.challenge.completed = savedHard.completed === true;
-      records.challenge.bestTime = savedHard.bestTime > 0 && Number.isFinite(savedHard.bestTime) ? savedHard.bestTime : null;
+    const savedChallenge = JSON.parse(localStorage.getItem(challengeRules.recordKey));
+    if (savedChallenge?.version === challengeRules.version) {
+      records.challenge.score = Math.floor(nonnegative(savedChallenge.score));
+      records.challenge.completed = savedChallenge.completed === true;
+      records.challenge.bestTime = savedChallenge.bestTime > 0 && Number.isFinite(savedChallenge.bestTime) ? savedChallenge.bestTime : null;
     }
   } catch (_) {}
   try { records.classic.score = Math.max(records.classic.score, nonnegative(Number(localStorage.getItem('minefield.best')))); muted = localStorage.getItem('minefield.muted') === 'true'; const savedGlow = localStorage.getItem('minefield.glowLevel'); glowLevel = ['off', 'classic', 'intense'].includes(savedGlow) ? savedGlow : localStorage.getItem('minefield.glow') === 'false' ? 'off' : 'classic'; glow = glowLevel !== 'off'; if (savedGlow !== glowLevel) localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {}
@@ -66,7 +66,7 @@
   }
   function renderRecords() {
     $('record-classic').textContent = `BEST ${pad(records.classic.score)} · WAVE ${records.classic.wave}`;
-    $('record-challenge').textContent = `HARD BEST ${pad(records.challenge.score)} · ${records.challenge.completed ? 'CLEARED · BEST TIME ' + formatTime(records.challenge.bestTime || 0) : 'NOT YET CLEARED'}`;
+    $('record-challenge').textContent = `BEST ${pad(records.challenge.score)} · ${records.challenge.completed ? 'CLEARED · BEST TIME ' + formatTime(records.challenge.bestTime || 0) : 'NOT YET CLEARED'}`;
     $('record-impossible').textContent = `BEST ${pad(records.impossible.score)} · CLEARED ${records.impossible.wave} · LONGEST ${formatTime(records.impossible.survival)}`;
   }
   const GLOW_PROFILES = {
