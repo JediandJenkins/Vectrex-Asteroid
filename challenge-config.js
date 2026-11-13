@@ -24,6 +24,6 @@
     {"count":6,"speed":60,"turn":0.42,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":1,"weave":1}},
     {"count":7,"speed":64,"turn":0.44,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":2,"surge":1,"weave":1}},
     {"count":7,"speed":68,"turn":0.47,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":2,"weave":1}},
-    {"count":9,"speed":90,"turn":0.6,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":3,"surge":2,"weave":2}}
+    {"count":9,"speed":90,"turn":0.6,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":2,"surge":2,"weave":2}}
   ]
 });
