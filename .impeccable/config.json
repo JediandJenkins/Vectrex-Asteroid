@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "dev-tools/difficulty-editor/*"
+        ],
+        "createdAt": "2026-11-13T22:55:30.331Z",
+        "reason": "User requested 'cyan vector outlines, subtle glow' Vectrex aesthetic for the local editor"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "dev-tools/difficulty-editor/index.html"
+        ],
+        "createdAt": "2026-11-13T22:55:30.361Z",
+        "reason": "Claude: only hit is frame-wrap, a bordered game viewport holding an iframe edge-to-edge"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          "dev-tools/difficulty-editor/*"
+        ],
+        "createdAt": "2026-11-13T22:55:30.391Z",
+        "reason": "Claude: 1px tracking only on short uppercase labels matching the game's retro type"
+      }
+    ]
+  }
+}

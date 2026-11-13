@@ -1,0 +1,29 @@
+/* Challenge Mode difficulty configuration (loaded by challenge.js, validated before use).
+ * Edit with the local difficulty editor: run `npm run dev`. Units: speed and fragmentSpeed in world
+ * units/sec on the 900x620 field; turn in radians/sec; pulse is the Surge/Weave speed swing (0.22 = ±22%);
+ * speedVariation is the random [min, max] multiplier per mine; fragments are pieces per split. */
+(function (root, config) {
+  if (typeof module === 'object' && module.exports) module.exports = config;
+  else root.MinefieldChallengeConfig = config;
+})(typeof globalThis !== 'undefined' ? globalThis : this, {
+  "schema": 1,
+  "version": "balanced-v2",
+  "startingLives": 3,
+  "bonusLifeWaves": [4,8],
+  "maxActiveMines": 72,
+  "waves": [
+    {"count":3,"speed":30,"turn":0.28,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":0,"surge":0,"weave":0}},
+    {"count":3,"speed":32,"turn":0.28,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":0,"surge":0,"weave":0}},
+    {"count":4,"speed":34,"turn":0.28,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":4,"curve":0,"surge":0,"weave":0}},
+    {"count":4,"speed":37,"turn":0.3,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":1,"surge":0,"weave":0}},
+    {"count":4,"speed":40,"turn":0.32,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":0,"weave":0}},
+    {"count":5,"speed":44,"turn":0.34,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":2,"surge":0,"weave":0}},
+    {"count":5,"speed":48,"turn":0.36,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":1,"weave":0}},
+    {"count":6,"speed":52,"turn":0.38,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":2,"surge":1,"weave":0}},
+    {"count":6,"speed":56,"turn":0.4,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":2,"weave":0}},
+    {"count":6,"speed":60,"turn":0.42,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":1,"weave":1}},
+    {"count":7,"speed":64,"turn":0.44,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":3,"curve":2,"surge":1,"weave":1}},
+    {"count":7,"speed":68,"turn":0.47,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":2,"surge":2,"weave":1}},
+    {"count":9,"speed":90,"turn":0.6,"pulse":0.22,"speedVariation":[0.85,1.2],"fragmentSpeed":26,"largeFragments":3,"mediumFragments":2,"behaviors":{"drift":2,"curve":3,"surge":2,"weave":2}}
+  ]
+});

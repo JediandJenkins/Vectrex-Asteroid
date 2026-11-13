@@ -1,0 +1,14 @@
+{
+  "name": "minefield-vector-arcade",
+  "private": true,
+  "description": "Minefield vector arcade game. Static site; dev-tools/ holds the local-only Challenge difficulty editor.",
+  "scripts": {
+    "dev": "node dev-tools/local-server/server.cjs",
+    "build": "node dev-tools/build.cjs",
+    "preview": "node dev-tools/local-server/server.cjs --preview",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

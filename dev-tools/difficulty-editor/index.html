@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Difficulty Lab — Minefield (local)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath fill='black' d='M0 0h40v40H0z'/%3E%3Cpath fill='none' stroke='%2322edff' stroke-width='2' d='M20 5L33 33 20 27 7 33Z'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="editor.css">
+<!-- The editor validates drafts with the same rules module the game ships. -->
+<script src="/game/challenge-config.js" defer></script>
+<script src="/game/challenge.js" defer></script>
+<script src="editor.js" defer></script>
+</head>
+<body>
+<header class="bar">
+  <div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m16 3 11 25-11-6-11 6Z"/></svg>
+    <div><strong>MINEFIELD · DIFFICULTY LAB</strong><span>CHALLENGE MODE · LOCAL ONLY · <span id="file-name">challenge-config.js</span></span></div>
+  </div>
+  <div class="actions">
+    <span id="dirty" class="dirty" hidden>UNSAVED CHANGES</span>
+    <button id="restore-btn" title="Discard unsaved edits and reload the saved file">↺ Restore saved</button>
+    <button id="baseline-btn" title="Load the balanced-v2 baseline into the editor (not saved until you Save)">⌂ Reset to baseline</button>
+    <button id="save-btn" class="primary" title="Write challenge-config.js (⌘S)">Save changes</button>
+  </div>
+</header>
+<p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
+
+<main class="layout">
+  <section class="panel controls" aria-label="Difficulty controls">
+    <h2>Wave</h2>
+    <div id="wave-grid" class="wave-grid" role="tablist" aria-label="Select wave"></div>
+
+    <div id="wave-fields"></div>
+
+    <h3>Behavior mix <small>initial large mines; fragments inherit</small></h3>
+    <div id="mix-bar" class="mix-bar" aria-hidden="true"></div>
+    <div id="mix" class="mix"></div>
+
+    <details class="tool" open>
+      <summary>Adjust a range of waves</summary>
+      <div class="range-tool">
+        <label>From <select id="range-from"></select></label>
+        <label>to <select id="range-to"></select></label>
+        <label>Setting <select id="range-key"></select></label>
+        <label>Operation
+          <select id="range-op">
+            <option value="scale">Scale by %</option>
+            <option value="add">Add amount</option>
+            <option value="ramp">Ramp between end waves</option>
+            <option value="copy">Copy selected wave's value</option>
+          </select></label>
+        <label id="range-amount-label">Amount <input id="range-amount" type="number" value="10" step="any"></label>
+        <button id="range-apply">Apply to range</button>
+        <p class="hint" id="range-hint"></p>
+      </div>
+    </details>
+
+    <details class="tool">
+      <summary>Campaign settings</summary>
+      <div id="campaign"></div>
+    </details>
+
+    <div id="errors" class="errors" role="alert" hidden></div>
+  </section>
+
+  <section class="panel tester" aria-label="Test a wave">
+    <div class="test-bar">
+      <h2>Test</h2>
+      <label>Wave <select id="test-wave"></select></label>
+      <label class="check"><input type="checkbox" id="seed-on"> Fixed seed</label>
+      <input id="seed" type="number" min="0" max="4294967295" value="1" aria-label="Seed" disabled>
+      <label>Ships <select id="test-lives"><option value="">Campaign</option><option>1</option><option>2</option><option>3</option><option>5</option><option>9</option></select></label>
+      <label class="check" title="Stop and show results when the wave is cleared"><input type="checkbox" id="stop-after" checked> Stop after clear</label>
+      <label class="check" title="Restart the wave whenever a setting changes"><input type="checkbox" id="auto-restart"> Restart on change</label>
+      <button id="test-btn" class="primary">▶ Test wave</button>
+      <button id="popout-btn" title="Open the game in its own window">⧉ Pop out</button>
+    </div>
+    <p class="hint">Edits apply to the test game instantly (steering and pulse mid-flight; counts, speeds and splits on the next spawn). Test runs never save scores or records. Clicking the editor pauses the game; click the game and press P (or Resume) to continue.</p>
+    <div class="frame-wrap"><iframe id="game-frame" src="/game/" title="Minefield test game"></iframe>
+      <div id="popped" class="popped" hidden><p>Game is open in a separate window.</p><button id="dock-btn">Dock it here</button></div>
+    </div>
+
+    <h2>Metrics <small id="metrics-scope"></small></h2>
+    <div class="metrics-tools">
+      <label class="check"><input type="checkbox" id="current-only" checked> Current settings only</label>
+      <button id="export-btn">Export JSON</button>
+      <button id="clear-btn">Clear this wave</button>
+    </div>
+    <div id="live" class="live" aria-live="polite"></div>
+    <dl id="summary" class="summary"></dl>
+    <div class="table-wrap"><table id="attempts"><thead><tr><th>#</th><th>Outcome</th><th>Time</th><th>Lives lost</th><th>Deaths</th><th>Destroyed</th><th>Peak</th><th>Seed</th><th>Settings</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Campaign curve</h2>
+    <div class="table-wrap"><table id="overview"><thead><tr><th>Wave</th><th>Large</th><th>Speed u/s</th><th>Steer rad/s</th><th>Pulse</th><th>D / C / S / W</th><th>Splits</th><th>Peak live</th><th>Tested</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</main>
+</body>
+</html>

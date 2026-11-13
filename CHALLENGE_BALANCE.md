@@ -1,5 +1,7 @@
 # Challenge balance — balanced-v2
 
+> The live values now come from `challenge-config.js`. Edit them with the local difficulty editor (`npm run dev`; see `dev-tools/README.md`). The table below documents the balanced-v2 baseline, which is also stored at `dev-tools/difficulty-editor/baseline-config.json`.
+
 Implemented after player feedback that Option B's finale exceeded Impossible's opening pressure. These are engine parameters chosen from mine-family budgets, existing movement behavior, and firing/collision mechanics; the requested 1.0–8.2 ratings are design goals, not measured scores or direct parameter multipliers.
 
 ## Actual 13-wave schedule

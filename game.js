@@ -12,11 +12,15 @@
   const TAU = Math.PI * 2, STEP = 1 / 120, HALO_SCALE = .25;
   let W = 900, H = 620, scale = 1, mode = 'start', score = 0, best = 0, wave = 1, lives = 3;
   let ship, mines = [], bullets = [], particles = [], elapsed = 0, waveDelay = 0, respawn = 0, bannerTime = 0;
-  const challengeRules = MinefieldChallenge;
+  let challengeRules = MinefieldChallenge;
+  // @dev-only-start (removed by `npm run build`; only the local difficulty test page defines MinefieldDevHooks)
+  const devHooks = globalThis.MinefieldDevHooks || null;
+  // @dev-only-end
   // One engine, with explicit per-mode budgets and progression rules.
   const MODES = {
     classic: {name: 'CLASSIC', lives: 3, extraEvery: 4, waves: null, count: 4, countStep: .75, countCap: 13, speed: 30, speedStep: 5, speedWaves: 30, fragmentSpeed: 26, fragments: 2, maxMines: 72},
-    challenge: {name: 'CHALLENGE', lives: 3, extraEvery: 0, waves: 13, fragmentSpeed: 26, maxMines: challengeRules.maxMines},
+    // Challenge balance lives in challenge-config.js; these read the validated rules.
+    challenge: {name: 'CHALLENGE', get lives() { return challengeRules.startingLives; }, extraEvery: 0, waves: 13, fragmentSpeed: 26, get maxMines() { return challengeRules.maxMines; }},
     impossible: {name: 'IMPOSSIBLE', lives: 1, extraEvery: 0, waves: null, count: 10, countStep: 1.25, countCap: 18, speed: 88, speedStep: 16, speedWaves: Infinity, fragmentSpeed: 34, fragments: 3, maxMines: 72}
   };
   let gameType = 'classic', completedWaves = 0, glow = true, glowLevel = 'classic', victoryTime = 0, framePaths = null, vectorAlpha = 1, vectorMatrix = null;
@@ -56,8 +60,12 @@
   } catch (_) {}
   try { records.classic.score = Math.max(records.classic.score, nonnegative(Number(localStorage.getItem('minefield.best')))); muted = localStorage.getItem('minefield.muted') === 'true'; const savedGlow = localStorage.getItem('minefield.glowLevel'); glowLevel = ['off', 'classic', 'intense'].includes(savedGlow) ? savedGlow : localStorage.getItem('minefield.glow') === 'false' ? 'off' : 'classic'; glow = glowLevel !== 'off'; if (savedGlow !== glowLevel) localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {}
   best = records.classic.score;
-  function save() { try { localStorage.setItem(challengeRules.recordKey, JSON.stringify(records.challenge)); localStorage.setItem('minefield.records', JSON.stringify({...records, challenge: legacyChallenge})); localStorage.setItem('minefield.best', String(records.classic.score)); localStorage.setItem('minefield.muted', String(muted)); localStorage.setItem('minefield.glow', String(glow)); localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {} }
+  function save() {
+    if (devHooks) return; // @dev-only (test runs never persist records or preferences)
+    try { localStorage.setItem(challengeRules.recordKey, JSON.stringify(records.challenge)); localStorage.setItem('minefield.records', JSON.stringify({...records, challenge: legacyChallenge})); localStorage.setItem('minefield.best', String(records.classic.score)); localStorage.setItem('minefield.muted', String(muted)); localStorage.setItem('minefield.glow', String(glow)); localStorage.setItem('minefield.glowLevel', glowLevel); } catch (_) {}
+  }
   function updateRecords(completed = false) {
+    if (devHooks) return; // @dev-only (test runs never touch records, even in memory)
     const record = records[gameType]; record.score = Math.max(record.score, score);
     if (gameType === 'classic') record.wave = Math.max(record.wave, wave);
     if (gameType === 'impossible') { record.wave = Math.max(record.wave, completedWaves); record.survival = Math.max(record.survival, elapsed); }
@@ -134,7 +142,7 @@
   }
   function mine(size, x, y, heading, inheritedBehavior) {
     const c = config(), d = difficulty(), r = [0, 12, 23, 39][size], angle = heading ?? rand(0, TAU);
-    const speed = (d.speed + (3 - size) * c.fragmentSpeed) * rand(.85, 1.2), shape = [];
+    const speed = (d.speed + (3 - size) * (d.fragmentSpeed ?? c.fragmentSpeed)) * rand(d.speedMin ?? .85, d.speedMax ?? 1.2), shape = [];
     for (let i = 0; i < 12; i++) shape.push((i % 2 ? rand(.48, .66) : rand(.82, 1)) * r);
     let behavior = inheritedBehavior || 'drift';
     if (!inheritedBehavior && gameType === 'impossible') behavior = Math.random() < .55 ? 'weave' : 'surge';
@@ -153,14 +161,16 @@
       const m = mine(3, p.x, p.y, undefined, behaviors?.[i]);
       mines.push(m);
     }
-    const variant = gameType === 'challenge' && wave === 4 ? '\nCURVING MINES' : gameType === 'challenge' && wave === 7 ? '\nSURGING MINES' : gameType === 'challenge' && wave === 10 ? '\nWEAVING MINES' : '';
+    const variant = gameType === 'challenge' ? challengeRules.introduced(wave).map(text => `\n${text}`).join('') : '';
     announce(`WAVE ${String(wave).padStart(2, '0')}${variant}`, 2.2); tone(170, 340, .25, .15, 'triangle');
     if (ship.alive) ship.shield = Math.max(ship.shield, 2);
     $('status').textContent = `${config().name} / FLIGHT ACTIVE`; updateRecords();
+    devHooks?.emit('waveStart', {gameType, wave, lives, elapsed, mines: mines.length}); // @dev-only
   }
   function start() {
     if (mode !== 'start') updateRecords();
     audioInit(); clearInput(); score = 0; wave = 1; lives = config().lives; completedWaves = 0; mines = []; bullets = []; particles = []; elapsed = 0; waveDelay = 0; respawn = 0; victoryTime = 0;
+    if (devHooks && gameType === 'challenge') { ({wave, lives} = devHooks.beforeStart()); completedWaves = wave - 1; } // @dev-only
     newShip(); mode = 'playing'; spawnWave(); $('overlay').hidden = true; $('pause-btn').disabled = false; $('pause-btn').innerHTML = 'Ⅱ <span>PAUSE</span>'; $('pause-btn').setAttribute('aria-label', 'Pause game'); controls.syncMode(); $('game').focus({preventScroll: true}); hud();
   }
   function mainMenu() {
@@ -188,6 +198,7 @@
     $('overlay').scrollTop = 0; if (!paused) $('start-btn').focus({preventScroll: true});
   }
   function finishWave() {
+    if (devHooks?.waveCleared({gameType, wave, lives, elapsed})) { mode = 'gameover'; clearInput(); showMenu('gameover'); $('pause-btn').disabled = true; devHooks.emit('halted', {wave}); return; } // @dev-only
     completedWaves++; updateRecords();
     const bonus = gameType === 'challenge' ? challengeRules.awardsLife(completedWaves) : config().extraEvery && completedWaves % config().extraEvery === 0;
     if (bonus) { lives++; tone(400, 900, .3, .15, 'triangle'); hud(); }
@@ -222,10 +233,12 @@
         mines.push(mine(m.size - 1, wrap(m.x + Math.cos(heading + spread) * 8, W), wrap(m.y + Math.sin(heading + spread) * 8, H), heading + spread, m.behavior));
       }
     }
+    devHooks?.emit('destroy', {gameType, size: m.size, mines: mines.length}); // @dev-only
     hud();
   }
   function hitShip() {
     ship.alive = false; lives--; respawn = 1.1; burst(ship.x, ship.y, 36, 210); rumble(5); tone(180, 25, .6, .2, 'sawtooth'); hud();
+    devHooks?.emit('shipLost', {gameType, wave, lives, elapsed}); // @dev-only
     if (!lives) { mode = 'gameover'; clearInput(); updateRecords(); showMenu('gameover'); $('pause-btn').disabled = true; }
   }
   // Swept segment-circle collision, using nearest toroidal images. Prevents fast shots tunneling through small mines.
@@ -240,12 +253,12 @@
     elapsed += dt;
     if (bannerTime > 0) { bannerTime -= dt; if (bannerTime <= 0) $('announcement').textContent = ''; }
     for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x = wrap(p.x + p.vx * dt, W); p.y = wrap(p.y + p.vy * dt, H); p.life -= dt; if (p.life <= 0) particles.splice(i, 1); }
-    const turn = difficulty().turn;
+    const {turn, pulse = .22} = difficulty();
     for (const m of mines) {
       if (m.behavior !== 'drift') {
         m.phase += dt * (m.behavior === 'weave' ? 1.4 : .85);
         m.heading += dt * turn * (m.behavior === 'curve' ? 1 : Math.sin(m.phase));
-        const speed = m.baseSpeed * (m.behavior === 'surge' || m.behavior === 'weave' ? 1 + .22 * Math.sin(m.phase * 1.3) : 1);
+        const speed = m.baseSpeed * (m.behavior === 'surge' || m.behavior === 'weave' ? 1 + pulse * Math.sin(m.phase * 1.3) : 1);
         m.vx = Math.cos(m.heading) * speed; m.vy = Math.sin(m.heading) * speed;
       }
       m.x = wrap(m.x + m.vx * dt, W); m.y = wrap(m.y + m.vy * dt, H); m.angle += m.spin * dt;
@@ -407,6 +420,13 @@
     best = records[gameType].score; lives = config().lives; $('status').textContent = `${config().name} / SYSTEM READY`; hud();
   });
   new ResizeObserver(resize).observe(arena);
+  // @dev-only-start
+  if (devHooks) devHooks.attach({
+    setRules(rules) { challengeRules = rules; hud(); },
+    startChallenge() { gameType = 'challenge'; start(); },
+    getState: () => ({mode, gameType, wave, lives, elapsed, mines: mines.length})
+  });
+  // @dev-only-end
   window.render_game_to_text = () => JSON.stringify({mode, gameType, completedWaves, elapsed, glow, glowLevel, fullscreen: display.fullscreenState, helpOpen: $('help-dialog').open, records, difficulty: difficulty(), maxMines: config().maxMines, coordinates: 'origin top-left; x right; y down; angles radians, 0 right; toroidal wrapping', width: W, height: H, score, best, wave, lives, ship, mines: mines.map(({shape, vertices, ...m}) => m), bullets, particles: particles.length, waveDelay, respawn, inputs: ['left', 'right', 'thrust', 'fire'].filter(active), input: {...input}, settingsOpen: controls.settingsOpen, muted});
   window.advanceTime = ms => { const n = Math.max(1, Math.round(ms / (STEP * 1000))); for (let i = 0; i < n; i++) update(STEP); render(); };
   mainMenu(); glowUI(); hud(); muteUI(); resize(); requestAnimationFrame(frame);

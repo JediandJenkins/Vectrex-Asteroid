@@ -8,7 +8,7 @@ function seededRandom(seed) {
 }
 // Run the actual game engine without rendering, audio, RAF, or a browser. Controls/UI have
 // separate real-browser checks; this harness only substitutes their environment and clock.
-function createEngine({seed = 1, saved = {}, gameSource, rulesSource} = {}) {
+function createEngine({seed = 1, saved = {}, gameSource, rulesSource, configSource, devHooks} = {}) {
   const storage = new Map(Object.entries(saved)), elements = new Map();
   const noop = () => {};
   const draw = new Proxy({createRadialGradient: () => ({addColorStop: noop})}, {get: (o, key) => o[key] || noop});
@@ -23,6 +23,9 @@ function createEngine({seed = 1, saved = {}, gameSource, rulesSource} = {}) {
     Path2D: class {moveTo() {} lineTo() {} closePath() {}},
     createArcadeControls: () => ({state: input, reset: () => Object.assign(input, {left: 0, right: 0, thrust: false, fire: false}), syncMode: noop, renderBindings: noop}),
     createArcadeInterface: () => ({fullscreenState: 'windowed'})});
+  if (devHooks) sandbox.MinefieldDevHooks = devHooks; // globalThis inside the sandbox, like window in a browser
+  // Same load order as index.html: the configuration, then the rules that validate it.
+  vm.runInContext(configSource || fs.readFileSync(path.join(root, 'challenge-config.js'), 'utf8'), sandbox);
   vm.runInContext(rulesSource || fs.readFileSync(path.join(root, 'challenge.js'), 'utf8'), sandbox);
   const source = gameSource || fs.readFileSync(path.join(root, 'game.js'), 'utf8');
   const tail = '  mainMenu(); glowUI(); hud(); muteUI(); resize(); requestAnimationFrame(frame);';

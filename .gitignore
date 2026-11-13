@@ -1,0 +1,6 @@
+# Production export (regenerate with: npm run build)
+dist/
+# Local difficulty-editor backups of challenge-config.js
+dev-tools/backups/
+.DS_Store
+node_modules/
